@@ -30,7 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text,
     );
     if (success && mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
+      final role = auth.user?.role.toLowerCase();
+      Navigator.pushReplacementNamed(context, role == 'provider' ? '/provider-home' : '/home');
     }
   }
 

@@ -73,6 +73,8 @@
 	<string>Lee's Road Assist may use the camera for video features.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Lee's Road Assist needs your location to request roadside help and track service providers.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Lee's Road Assist uses location to continue provider tracking during active roadside jobs.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Lee's Road Assist needs photo access when you attach images for service requests.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

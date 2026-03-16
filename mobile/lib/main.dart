@@ -16,6 +16,9 @@ import 'screens/call/active_call_screen.dart';
 import 'screens/profile/vehicles_screen.dart';
 import 'screens/profile/payment_methods_screen.dart';
 import 'screens/call/voip_dialer_screen.dart';
+import 'screens/provider/provider_home_screen.dart';
+import 'screens/provider/provider_jobs_screen.dart';
+import 'screens/provider/provider_profile_screen.dart';
 
 void main() {
   runApp(const LeesRoadsideAssistApp());
@@ -50,6 +53,9 @@ class LeesRoadsideAssistApp extends StatelessWidget {
           '/call/incoming': (_) => const IncomingCallScreen(),
           '/call/active': (_) => const ActiveCallScreen(),
           '/voip': (_) => const VoipDialerScreen(),
+          '/provider-home': (_) => const ProviderHomeScreen(),
+          '/provider-jobs': (_) => const ProviderJobsScreen(),
+          '/provider-profile': (_) => const ProviderProfileScreen(),
         },
       ),
     );
@@ -75,7 +81,12 @@ class _AuthGateState extends State<_AuthGate> {
     await auth.loadUser();
     if (!mounted) return;
     if (auth.isAuthenticated) {
-      Navigator.pushReplacementNamed(context, '/home');
+      final role = auth.user?.role.toLowerCase();
+      if (role == 'provider') {
+        Navigator.pushReplacementNamed(context, '/provider-home');
+      } else {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
     } else {
       Navigator.pushReplacementNamed(context, '/login');
     }
