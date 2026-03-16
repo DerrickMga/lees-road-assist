@@ -71,5 +71,11 @@
 	<string>Lee's Road Assist needs microphone access for in-app voice calls with your driver.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Lee's Road Assist may use the camera for video features.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Lee's Road Assist needs your location to request roadside help and track service providers.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Lee's Road Assist needs photo access when you attach images for service requests.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Lee's Road Assist needs permission to save generated receipts and proof images to your photo library.</string>
 </dict>
 </plist>

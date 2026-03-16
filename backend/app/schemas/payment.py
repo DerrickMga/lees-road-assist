@@ -70,3 +70,32 @@ class RefundRequest(BaseModel):
 class PayoutProcessRequest(BaseModel):
     provider_user_id: int
     request_id: int | None = None
+
+
+class PaymentMethodCreate(BaseModel):
+    provider_name: str
+    payment_type: str = "mobile_money"
+    masked_reference: str | None = None
+    token_reference: str | None = None
+    is_default: bool = False
+
+
+class PaymentMethodUpdate(BaseModel):
+    provider_name: str | None = None
+    payment_type: str | None = None
+    masked_reference: str | None = None
+    token_reference: str | None = None
+    is_default: bool | None = None
+
+
+class PaymentMethodOut(BaseModel):
+    id: int
+    user_id: int
+    provider_name: str
+    payment_type: str
+    masked_reference: str | None = None
+    token_reference: str | None = None
+    is_default: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

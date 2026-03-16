@@ -37,7 +37,7 @@ class ProfileScreen extends StatelessWidget {
                   title: const Text('My Vehicles'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    // TODO: Navigate to vehicles screen
+                    Navigator.pushNamed(context, '/vehicles');
                   },
                 ),
                 ListTile(
@@ -45,7 +45,16 @@ class ProfileScreen extends StatelessWidget {
                   title: const Text('Payment Methods'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    // TODO: Navigate to payment methods screen
+                    Navigator.pushNamed(context, '/payment-methods');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.call),
+                  title: const Text('VoIP Calling'),
+                  subtitle: const Text('Check connection and place a call'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/voip');
                   },
                 ),
                 ListTile(

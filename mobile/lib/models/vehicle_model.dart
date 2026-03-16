@@ -7,7 +7,9 @@ class VehicleModel {
   final String registrationNumber;
   final String? colour;
   final String? fuelType;
-  final String vehicleClass;
+  final String? transmissionType;
+  final String vehicleCategory;
+  final bool isDefault;
 
   VehicleModel({
     required this.id,
@@ -18,19 +20,23 @@ class VehicleModel {
     required this.registrationNumber,
     this.colour,
     this.fuelType,
-    required this.vehicleClass,
+    this.transmissionType,
+    required this.vehicleCategory,
+    this.isDefault = false,
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) => VehicleModel(
-        id: json['id'],
-        ownerId: json['owner_id'],
+        id: (json['id'] ?? '').toString(),
+        ownerId: (json['owner_id'] ?? json['user_id'] ?? '').toString(),
         make: json['make'],
         model: json['model'],
         year: json['year'],
         registrationNumber: json['registration_number'],
         colour: json['colour'],
         fuelType: json['fuel_type'],
-        vehicleClass: json['vehicle_class'],
+        transmissionType: json['transmission_type'],
+        vehicleCategory: (json['vehicle_category'] ?? json['vehicle_class'] ?? 'sedan').toString(),
+        isDefault: json['is_default'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -40,6 +46,8 @@ class VehicleModel {
         'registration_number': registrationNumber,
         'colour': colour,
         'fuel_type': fuelType,
-        'vehicle_class': vehicleClass,
+        'transmission_type': transmissionType,
+        'vehicle_category': vehicleCategory,
+        'is_default': isDefault,
       };
 }

@@ -66,11 +66,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildServicesTab(BuildContext context) {
+    final voip = context.watch<VoipProvider>();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Card(
+            child: ListTile(
+              leading: Icon(
+                voip.state == VoipState.registered ? Icons.call : Icons.call_end,
+                color: voip.state == VoipState.registered ? Colors.green : Colors.orange,
+              ),
+              title: const Text('VoIP Calling'),
+              subtitle: Text(
+                voip.state == VoipState.registered
+                    ? 'Connected'
+                    : voip.state == VoipState.registering
+                        ? 'Connecting...'
+                        : 'Not connected',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.pushNamed(context, '/voip'),
+            ),
+          ),
+          const SizedBox(height: 12),
           // SOS Button
           SizedBox(
             width: double.infinity,

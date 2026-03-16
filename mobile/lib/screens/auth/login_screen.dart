@@ -95,6 +95,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     return const SizedBox.shrink();
                   },
                 ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/reset-password'),
+                    child: const Text('Forgot password?'),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Consumer<AuthProvider>(
                   builder: (ctx, auth, _) => ElevatedButton(

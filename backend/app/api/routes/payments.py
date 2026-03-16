@@ -8,16 +8,118 @@ from app.core.database import get_db
 from app.core.config import get_settings
 from app.api.deps import get_current_user, require_admin
 from app.models.user import User
-from app.models.payment import Transaction, TransactionType, TransactionStatus, Wallet, WalletLedgerEntry, ProviderPayout, PaymentWebhookLog
+from app.models.payment import Transaction, TransactionType, TransactionStatus, Wallet, WalletLedgerEntry, ProviderPayout, PaymentWebhookLog, PaymentMethod
 from app.models.request import ServiceRequest
 from app.schemas.payment import (
     PaymentInitRequest, PaymentVerifyRequest, TransactionOut,
     WalletFundRequest, WalletOut, RefundRequest, PayoutProcessRequest,
+    PaymentMethodCreate, PaymentMethodUpdate, PaymentMethodOut,
 )
 from app.services import paynow_service
 
 router = APIRouter()
 settings = get_settings()
+
+
+@router.get("/methods", response_model=List[PaymentMethodOut])
+async def list_payment_methods(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PaymentMethod)
+        .where(PaymentMethod.user_id == user.id)
+        .order_by(PaymentMethod.is_default.desc(), PaymentMethod.created_at.desc())
+    )
+    return [PaymentMethodOut.model_validate(m) for m in result.scalars().all()]
+
+
+@router.post("/methods", response_model=PaymentMethodOut, status_code=status.HTTP_201_CREATED)
+async def create_payment_method(
+    payload: PaymentMethodCreate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    method = PaymentMethod(
+        user_id=user.id,
+        provider_name=payload.provider_name,
+        payment_type=payload.payment_type,
+        masked_reference=payload.masked_reference,
+        token_reference=payload.token_reference,
+        is_default=payload.is_default,
+    )
+
+    if payload.is_default:
+        existing = await db.execute(
+            select(PaymentMethod).where(
+                PaymentMethod.user_id == user.id,
+                PaymentMethod.is_default == True,
+            )
+        )
+        for m in existing.scalars().all():
+            m.is_default = False
+
+    db.add(method)
+    await db.commit()
+    await db.refresh(method)
+    return PaymentMethodOut.model_validate(method)
+
+
+@router.put("/methods/{method_id}", response_model=PaymentMethodOut)
+async def update_payment_method(
+    method_id: int,
+    payload: PaymentMethodUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PaymentMethod).where(
+            PaymentMethod.id == method_id,
+            PaymentMethod.user_id == user.id,
+        )
+    )
+    method = result.scalar_one_or_none()
+    if not method:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment method not found")
+
+    data = payload.model_dump(exclude_unset=True)
+    for field, value in data.items():
+        setattr(method, field, value)
+
+    if payload.is_default is True:
+        existing = await db.execute(
+            select(PaymentMethod).where(
+                PaymentMethod.user_id == user.id,
+                PaymentMethod.id != method_id,
+                PaymentMethod.is_default == True,
+            )
+        )
+        for m in existing.scalars().all():
+            m.is_default = False
+
+    await db.commit()
+    await db.refresh(method)
+    return PaymentMethodOut.model_validate(method)
+
+
+@router.delete("/methods/{method_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_payment_method(
+    method_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PaymentMethod).where(
+            PaymentMethod.id == method_id,
+            PaymentMethod.user_id == user.id,
+        )
+    )
+    method = result.scalar_one_or_none()
+    if not method:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment method not found")
+
+    await db.delete(method)
+    await db.commit()
 
 
 # ─── Internal WhatsApp payment endpoint ──────────────────────────────────────

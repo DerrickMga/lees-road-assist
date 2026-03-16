@@ -122,13 +122,18 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-700">Password</label>
-                <button
-                  type="button"
-                  onClick={() => setForgotStep('send')}
-                  className="text-xs text-yellow-600 hover:underline"
-                >
-                  Forgot password?
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setForgotStep('send')}
+                    className="text-xs text-yellow-600 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                  <Link href="/forgot-password" className="text-xs text-yellow-700 hover:underline">
+                    Full reset page
+                  </Link>
+                </div>
               </div>
               <input
                 type="password"

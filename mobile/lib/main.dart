@@ -6,12 +6,16 @@ import 'providers/request_provider.dart';
 import 'providers/voip_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/request/request_screen.dart';
 import 'screens/tracking/tracking_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/call/incoming_call_screen.dart';
 import 'screens/call/active_call_screen.dart';
+import 'screens/profile/vehicles_screen.dart';
+import 'screens/profile/payment_methods_screen.dart';
+import 'screens/call/voip_dialer_screen.dart';
 
 void main() {
   runApp(const LeesRoadsideAssistApp());
@@ -36,12 +40,16 @@ class LeesRoadsideAssistApp extends StatelessWidget {
         routes: {
           '/login': (_) => const LoginScreen(),
           '/register': (_) => const RegisterScreen(),
+          '/reset-password': (_) => const ResetPasswordScreen(),
           '/home': (_) => const HomeScreen(),
           '/request': (_) => const RequestScreen(),
           '/tracking': (_) => const TrackingScreen(),
           '/profile': (_) => const ProfileScreen(),
+          '/vehicles': (_) => const VehiclesScreen(),
+          '/payment-methods': (_) => const PaymentMethodsScreen(),
           '/call/incoming': (_) => const IncomingCallScreen(),
           '/call/active': (_) => const ActiveCallScreen(),
+          '/voip': (_) => const VoipDialerScreen(),
         },
       ),
     );

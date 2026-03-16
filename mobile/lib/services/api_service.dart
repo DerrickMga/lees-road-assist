@@ -63,6 +63,15 @@ class ApiService {
     return _handleResponse(response);
   }
 
+  static Future<Map<String, dynamic>> put(String path, Map<String, dynamic> body) async {
+    final response = await http.put(
+      Uri.parse('${AppConfig.apiBaseUrl}$path'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    ).timeout(AppConfig.requestTimeout);
+    return _handleResponse(response);
+  }
+
   static Future<void> delete(String path) async {
     final response = await http.delete(
       Uri.parse('${AppConfig.apiBaseUrl}$path'),
