@@ -1,0 +1,111 @@
+{
+  "version": "6.1",
+  "routing_model": {
+    "JOB_DETAILS": []
+  },
+  "screens": [
+    {
+      "id": "JOB_DETAILS",
+      "title": "New Job Request",
+      "terminal": true,
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "New Job Available \ud83d\udea8"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "${data.service_label}"
+          },
+          {
+            "type": "TextBody",
+            "text": "\ud83d\udccd ${data.location}\n\n\ud83d\udcdd ${data.description}\n\n\ud83d\ude97 Vehicle: ${data.vehicle_info}\n\n\ud83d\udcb5 Payment: ${data.payment_method}"
+          },
+          {
+            "type": "TextBody",
+            "text": "\u23f1\ufe0f Posted: ${data.posted_at}"
+          },
+          {
+            "type": "Form",
+            "name": "response_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "response",
+                "label": "Your response",
+                "required": true,
+                "data-source": [
+                  {
+                    "id": "accept",
+                    "title": "Accept this job"
+                  },
+                  {
+                    "id": "decline",
+                    "title": "Decline"
+                  }
+                ]
+              },
+              {
+                "type": "TextInput",
+                "name": "eta_minutes",
+                "label": "ETA in minutes (if accepting)",
+                "input-type": "number",
+                "required": false,
+                "helper-text": "e.g. 15"
+              },
+              {
+                "type": "Footer",
+                "label": "Submit Response",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "assignment_id": "${data.assignment_id}",
+                    "request_uuid": "${data.request_uuid}",
+                    "response": "${form.response}",
+                    "eta_minutes": "${form.eta_minutes}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "data": {
+        "assignment_id": {
+          "type": "string",
+          "__example__": "123"
+        },
+        "request_uuid": {
+          "type": "string",
+          "__example__": "abc-uuid"
+        },
+        "service_label": {
+          "type": "string",
+          "__example__": "Tyre Change"
+        },
+        "location": {
+          "type": "string",
+          "__example__": "45 Borrowdale Road"
+        },
+        "description": {
+          "type": "string",
+          "__example__": "Flat front-left tyre"
+        },
+        "vehicle_info": {
+          "type": "string",
+          "__example__": "White Toyota Vitz 2018"
+        },
+        "payment_method": {
+          "type": "string",
+          "__example__": "EcoCash"
+        },
+        "posted_at": {
+          "type": "string",
+          "__example__": "15 Mar 2026 09:00 UTC"
+        }
+      }
+    }
+  ]
+}

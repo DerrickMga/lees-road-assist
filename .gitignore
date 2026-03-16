@@ -1,0 +1,61 @@
+# ── Secrets ──────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+backend/.env.production
+backend/firebase-credentials.json
+
+# ── SSL certs ─────────────────────────────────────────────────────────────────
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+*.egg
+.pytest_cache/
+.mypy_cache/
+
+# ── Node / Next.js ────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.npm/
+web/node_modules/
+web/.next/
+web/out/
+
+# ── Flutter / Dart ────────────────────────────────────────────────────────────
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+*.jks
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+*.log
+backend/logs/
+
+# ── Misc patch scripts ────────────────────────────────────────────────────────
+patch_*.py
+strip_provenance.py

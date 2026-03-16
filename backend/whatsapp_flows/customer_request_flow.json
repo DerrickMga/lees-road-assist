@@ -1,0 +1,373 @@
+{
+  "version": "6.1",
+  "routing_model": {
+    "SERVICE_SELECT": [
+      "LOCATION_DETAILS"
+    ],
+    "LOCATION_DETAILS": [
+      "VEHICLE_DETAILS"
+    ],
+    "VEHICLE_DETAILS": [
+      "PAYMENT_METHOD"
+    ],
+    "PAYMENT_METHOD": []
+  },
+  "screens": [
+    {
+      "id": "SERVICE_SELECT",
+      "title": "Request Assistance",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "What do you need? \ud83d\ude97"
+          },
+          {
+            "type": "TextBody",
+            "text": "Select a service and we'll dispatch the nearest certified technician to your location \u2014 available 24/7."
+          },
+          {
+            "type": "Form",
+            "name": "service_form",
+            "children": [
+              {
+                "type": "Dropdown",
+                "name": "service_type",
+                "label": "Service Type",
+                "required": true,
+                "data-source": [
+                  {
+                    "id": "battery",
+                    "title": "Battery Jump Start"
+                  },
+                  {
+                    "id": "tyre",
+                    "title": "Tyre Change"
+                  },
+                  {
+                    "id": "fuel",
+                    "title": "Fuel Delivery"
+                  },
+                  {
+                    "id": "lockout",
+                    "title": "Lockout Rescue"
+                  },
+                  {
+                    "id": "repair",
+                    "title": "On-Site Repair"
+                  },
+                  {
+                    "id": "tow_local",
+                    "title": "Local Tow (within city)"
+                  },
+                  {
+                    "id": "tow_long",
+                    "title": "Long Distance Tow"
+                  },
+                  {
+                    "id": "accident",
+                    "title": "Accident Assistance"
+                  },
+                  {
+                    "id": "other",
+                    "title": "Other Issue"
+                  }
+                ]
+              },
+              {
+                "type": "Footer",
+                "label": "Next",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": {
+                    "type": "screen",
+                    "name": "LOCATION_DETAILS"
+                  },
+                  "payload": {
+                    "service_type": "${form.service_type}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "LOCATION_DETAILS",
+      "title": "Your Location",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Where are you? \ud83d\udccd"
+          },
+          {
+            "type": "TextBody",
+            "text": "We need your location to dispatch the nearest available technician."
+          },
+          {
+            "type": "Form",
+            "name": "location_form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "address",
+                "label": "Street address or area",
+                "input-type": "text",
+                "required": true,
+                "helper-text": "e.g. 45 Borrowdale Road, Harare"
+              },
+              {
+                "type": "TextInput",
+                "name": "landmark",
+                "label": "Nearest landmark (optional)",
+                "input-type": "text",
+                "required": false,
+                "helper-text": "e.g. Near Westgate Mall"
+              },
+              {
+                "type": "TextArea",
+                "name": "description",
+                "label": "Describe the issue (optional)",
+                "required": false,
+                "helper-text": "e.g. Toyota Corolla 2019 \u2014 won't start, think it's the battery"
+              },
+              {
+                "type": "Footer",
+                "label": "Next",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": {
+                    "type": "screen",
+                    "name": "VEHICLE_DETAILS"
+                  },
+                  "payload": {
+                    "service_type": "${data.service_type}",
+                    "address": "${form.address}",
+                    "landmark": "${form.landmark}",
+                    "description": "${form.description}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "data": {
+        "service_type": {
+          "type": "string",
+          "__example__": "tyre"
+        }
+      }
+    },
+    {
+      "id": "VEHICLE_DETAILS",
+      "title": "Vehicle Info",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Your Vehicle \ud83d\ude99"
+          },
+          {
+            "type": "TextBody",
+            "text": "All fields are optional but help the technician prepare the right tools."
+          },
+          {
+            "type": "Form",
+            "name": "vehicle_form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "vehicle_make",
+                "label": "Make",
+                "input-type": "text",
+                "required": false,
+                "helper-text": "e.g. Toyota"
+              },
+              {
+                "type": "TextInput",
+                "name": "vehicle_model",
+                "label": "Model",
+                "input-type": "text",
+                "required": false,
+                "helper-text": "e.g. Corolla"
+              },
+              {
+                "type": "TextInput",
+                "name": "vehicle_year",
+                "label": "Year",
+                "input-type": "text",
+                "required": false,
+                "helper-text": "e.g. 2019"
+              },
+              {
+                "type": "TextInput",
+                "name": "vehicle_color",
+                "label": "Colour",
+                "input-type": "text",
+                "required": false,
+                "helper-text": "e.g. Silver"
+              },
+              {
+                "type": "Footer",
+                "label": "Next",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": {
+                    "type": "screen",
+                    "name": "PAYMENT_METHOD"
+                  },
+                  "payload": {
+                    "service_type": "${data.service_type}",
+                    "address": "${data.address}",
+                    "landmark": "${data.landmark}",
+                    "description": "${data.description}",
+                    "vehicle_make": "${form.vehicle_make}",
+                    "vehicle_model": "${form.vehicle_model}",
+                    "vehicle_year": "${form.vehicle_year}",
+                    "vehicle_color": "${form.vehicle_color}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "data": {
+        "service_type": {
+          "type": "string",
+          "__example__": "tyre"
+        },
+        "address": {
+          "type": "string",
+          "__example__": "45 Borrowdale Road"
+        },
+        "landmark": {
+          "type": "string",
+          "__example__": "Near Westgate"
+        },
+        "description": {
+          "type": "string",
+          "__example__": "Won't start"
+        }
+      }
+    },
+    {
+      "id": "PAYMENT_METHOD",
+      "title": "Payment & Confirm",
+      "terminal": true,
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Almost done! \ud83d\udcb3"
+          },
+          {
+            "type": "TextBody",
+            "text": "Choose how you will pay the technician once the job is complete."
+          },
+          {
+            "type": "Form",
+            "name": "payment_form",
+            "children": [
+              {
+                "type": "RadioButtonsGroup",
+                "name": "payment_method",
+                "label": "Payment Method",
+                "required": true,
+                "data-source": [
+                  {
+                    "id": "cash",
+                    "title": "Cash"
+                  },
+                  {
+                    "id": "ecocash",
+                    "title": "EcoCash"
+                  },
+                  {
+                    "id": "onemoney",
+                    "title": "OneMoney"
+                  },
+                  {
+                    "id": "innbucks",
+                    "title": "InnBucks"
+                  }
+                ]
+              },
+              {
+                "type": "CheckboxGroup",
+                "name": "tnc_agree",
+                "label": "Terms",
+                "required": true,
+                "data-source": [
+                  {
+                    "id": "agree",
+                    "title": "I agree to Lee's Road Assist Terms of Service and understand pricing is an estimate"
+                  }
+                ]
+              },
+              {
+                "type": "Footer",
+                "label": "Request Assistance",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "service_type": "${data.service_type}",
+                    "address": "${data.address}",
+                    "landmark": "${data.landmark}",
+                    "description": "${data.description}",
+                    "vehicle_make": "${data.vehicle_make}",
+                    "vehicle_model": "${data.vehicle_model}",
+                    "vehicle_year": "${data.vehicle_year}",
+                    "vehicle_color": "${data.vehicle_color}",
+                    "payment_method": "${form.payment_method}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "data": {
+        "service_type": {
+          "type": "string",
+          "__example__": "tyre"
+        },
+        "address": {
+          "type": "string",
+          "__example__": "45 Borrowdale Road"
+        },
+        "landmark": {
+          "type": "string",
+          "__example__": "Near Westgate"
+        },
+        "description": {
+          "type": "string",
+          "__example__": "Won't start"
+        },
+        "vehicle_make": {
+          "type": "string",
+          "__example__": "Toyota"
+        },
+        "vehicle_model": {
+          "type": "string",
+          "__example__": "Corolla"
+        },
+        "vehicle_year": {
+          "type": "string",
+          "__example__": "2019"
+        },
+        "vehicle_color": {
+          "type": "string",
+          "__example__": "Silver"
+        }
+      }
+    }
+  ]
+}
