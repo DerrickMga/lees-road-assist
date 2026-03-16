@@ -22,5 +22,5 @@ websockets==14.2
 firebase-admin==6.6.0
 pyotp==2.9.0
 pusher==3.3.2
-pusher-push-notifications==1.1.1
+pusher-push-notifications==2.0.2
 googlemaps==4.10.0

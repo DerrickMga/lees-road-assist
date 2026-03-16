@@ -76,6 +76,17 @@ class Settings(BaseSettings):
     sms_api_key: str = ""
     sms_sender_id: str = "LeesExpress"
 
+    # SMTP / Email
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = ""
+    smtp_from_name: str = "Lee's Express Courier"
+    smtp_use_tls: bool = True
+    smtp_use_ssl: bool = False
+    smtp_pickup_directory: str = ""
+
     # Frontend URLs
     frontend_url: str = "http://localhost:3000"
     mobile_deep_link_scheme: str = "leesexpress"

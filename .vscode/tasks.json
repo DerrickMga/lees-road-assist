@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Deploy LRA (Elevated)",
+			"type": "shell",
+			"command": "Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File C:\\inetpub\\wwwroot\\lees-road-assist\\deploy_elevated.ps1' -Verb RunAs -Wait",
+			"isBackground": false
+		},
+		{
+			"label": "Deploy LRA Full",
+			"type": "shell",
+			"command": "net stop W3SVC & net stop WAS & sc config W3SVC start= disabled & net localgroup docker-users Administrator /add & echo {\"hosts\": [\"npipe://\", \"tcp://127.0.0.1:2375\"]} > C:\\ProgramData\\docker\\config\\daemon.json & net stop docker & net start docker & timeout /t 5 & docker-compose pull --ignore-buildable & docker-compose build --no-cache & docker-compose up -d db redis & timeout /t 15 & docker-compose run --rm backend alembic upgrade head & docker-compose up -d",
+			"isBackground": false
+		}
+	]
+}

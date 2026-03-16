@@ -1,4 +1,5 @@
 import secrets
+import logging
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,8 @@ from app.core.config import get_settings
 from app.api.deps import get_current_user
 from app.models.user import User, UserRole, UserStatus, UserOTP
 from app.models.customer import CustomerProfile
+from app.models.provider import ProviderProfile, ProviderType
+from app.services.otp_delivery import OTPDeliveryError, send_otp as deliver_otp
 from app.schemas.user import (
     RegisterRequest, LoginRequest, SendOTPRequest, VerifyOTPRequest,
     ForgotPasswordRequest, ResetPasswordRequest, Token, UserOut,
@@ -16,6 +19,7 @@ from app.schemas.user import (
 
 router = APIRouter()
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -48,6 +52,14 @@ async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db))
     # Auto-create customer profile for customer role
     if role == UserRole.CUSTOMER:
         db.add(CustomerProfile(user_id=user.id))
+    elif role in (UserRole.PROVIDER, UserRole.TOW_OPERATOR):
+        db.add(
+            ProviderProfile(
+                user_id=user.id,
+                business_name=f"{payload.first_name} {payload.last_name}".strip() or None,
+                provider_type=ProviderType.INDIVIDUAL,
+            )
+        )
 
     await db.commit()
     await db.refresh(user)
@@ -91,6 +103,10 @@ async def send_otp(payload: SendOTPRequest, db: AsyncSession = Depends(get_db)):
     )
     user = result.scalar_one_or_none()
 
+    if not user and "@" not in payload.phone_or_email:
+        fallback_result = await db.execute(select(User).where(User.phone == payload.phone_or_email))
+        user = fallback_result.scalar_one_or_none()
+
     otp = UserOTP(
         user_id=user.id if user else None,
         phone_or_email=payload.phone_or_email,
@@ -100,9 +116,38 @@ async def send_otp(payload: SendOTPRequest, db: AsyncSession = Depends(get_db)):
     )
     db.add(otp)
     await db.commit()
+    await db.refresh(otp)
 
-    # TODO: Send OTP via SMS/WhatsApp/email
-    return {"message": "OTP sent", "expires_in_minutes": settings.otp_expire_minutes}
+    try:
+        channel = await deliver_otp(payload.phone_or_email, otp_code, payload.purpose, user)
+    except OTPDeliveryError as exc:
+        logger.exception(
+            "OTP delivery failed otp_id=%s target=%s user_id=%s role=%s",
+            otp.id,
+            payload.phone_or_email,
+            user.id if user else None,
+            user.role.value if user else None,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Failed to deliver OTP: {exc}",
+        ) from exc
+
+    logger.info(
+        "OTP delivered otp_id=%s target=%s user_id=%s role=%s channel=%s purpose=%s",
+        otp.id,
+        payload.phone_or_email,
+        user.id if user else None,
+        user.role.value if user else None,
+        channel,
+        payload.purpose,
+    )
+    return {
+        "message": f"OTP sent via {channel}",
+        "channel": channel,
+        "otp_id": otp.id,
+        "expires_in_minutes": settings.otp_expire_minutes,
+    }
 
 
 @router.post("/verify-otp")
@@ -127,7 +172,10 @@ async def verify_otp(payload: VerifyOTPRequest, db: AsyncSession = Depends(get_d
         user_result = await db.execute(select(User).where(User.id == otp.user_id))
         user = user_result.scalar_one_or_none()
         if user:
-            user.is_phone_verified = True
+            if "@" in payload.phone_or_email:
+                user.is_email_verified = True
+            else:
+                user.is_phone_verified = True
             user.status = UserStatus.ACTIVE
 
     await db.commit()
@@ -159,6 +207,12 @@ async def forgot_password(payload: ForgotPasswordRequest, db: AsyncSession = Dep
     )
     db.add(otp)
     await db.commit()
+
+    try:
+        await deliver_otp(payload.phone_or_email, otp_code, "password_reset", user)
+    except OTPDeliveryError:
+        logger.exception("Password reset OTP delivery failed for %s", payload.phone_or_email)
+
     return {"message": "If the account exists, a reset code has been sent"}
 
 

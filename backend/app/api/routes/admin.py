@@ -12,7 +12,17 @@ from app.api.deps import require_admin
 from app.models.user import User, UserRole, UserStatus
 from app.models.request import ServiceRequest, RequestStatus
 from app.models.payment import Transaction, TransactionStatus, ProviderPayout
-from app.models.provider import ProviderProfile, ProfileStatus, ProviderType, ProviderTier, ProviderAvailability, compute_tier
+from app.models.provider import (
+    ProviderProfile,
+    ProfileStatus,
+    ProviderType,
+    ProviderTier,
+    ProviderAvailability,
+    ProviderDocument,
+    ProviderAsset,
+    ProviderServiceCapability,
+    compute_tier,
+)
 from app.models.dispatch import DispatchAssignment, DispatchStatus, AssignmentType
 from app.models.admin import SystemSetting, AdminAction, ComplianceCheck, AnalyticsDailyMetric
 from app.schemas.request import ServiceRequestOut
@@ -21,6 +31,67 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 _WHATSAPP_BOT_URL = "http://localhost:8001"
+
+
+async def build_provider_performance(profile: ProviderProfile, db: AsyncSession) -> dict:
+    assign_result = await db.execute(
+        select(
+            func.count(DispatchAssignment.id),
+            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.ACCEPTED),
+            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.DECLINED),
+            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.COMPLETED),
+            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.TIMED_OUT),
+        ).where(DispatchAssignment.provider_user_id == profile.user_id)
+    )
+    assignment_row = assign_result.one()
+    total_assigned, total_accepted, total_declined, total_completed, total_timed_out = (
+        assignment_row[0] or 0,
+        assignment_row[1] or 0,
+        assignment_row[2] or 0,
+        assignment_row[3] or 0,
+        assignment_row[4] or 0,
+    )
+
+    earnings_result = await db.execute(
+        select(
+            func.coalesce(func.sum(ProviderPayout.gross_amount), 0),
+            func.coalesce(func.sum(ProviderPayout.commission_amount), 0),
+            func.coalesce(func.sum(ProviderPayout.net_amount), 0),
+            func.count(ProviderPayout.id),
+        ).where(ProviderPayout.provider_user_id == profile.user_id)
+    )
+    earnings_row = earnings_result.one()
+
+    eta_result = await db.execute(
+        select(func.avg(DispatchAssignment.arrival_eta_minutes)).where(
+            DispatchAssignment.provider_user_id == profile.user_id,
+            DispatchAssignment.arrival_eta_minutes.isnot(None),
+        )
+    )
+    avg_eta = eta_result.scalar()
+
+    completion_rate = round((total_completed / total_assigned * 100) if total_assigned > 0 else 0, 1)
+    acceptance_rate = round((total_accepted / total_assigned * 100) if total_assigned > 0 else 0, 1)
+
+    return {
+        "assignments": {
+            "total_assigned": total_assigned,
+            "total_accepted": total_accepted,
+            "total_declined": total_declined,
+            "total_completed": total_completed,
+            "total_timed_out": total_timed_out,
+            "completion_rate_pct": completion_rate,
+            "acceptance_rate_pct": acceptance_rate,
+        },
+        "earnings": {
+            "total_gross": float(earnings_row[0]),
+            "total_commission": float(earnings_row[1]),
+            "total_net": float(earnings_row[2]),
+            "total_payout_records": earnings_row[3],
+            "currency": "USD",
+        },
+        "avg_eta_minutes": round(float(avg_eta), 1) if avg_eta else None,
+    }
 
 
 @router.get("/requests")
@@ -172,6 +243,7 @@ async def admin_create_user(
 
 @router.get("/users")
 async def list_all_users(
+    role: str | None = None,
     status_filter: str | None = None,
     admin: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -196,6 +268,16 @@ async def list_all_users(
         }
         for u in users
     ]
+
+
+class DocumentVerificationRequest(BaseModel):
+    status: str
+
+
+class ComplianceCheckCreateRequest(BaseModel):
+    check_type: str
+    status: str = "pending"
+    notes: str | None = None
 
 
 @router.post("/users/{user_id}/suspend")
@@ -285,6 +367,134 @@ async def list_providers(
     return out
 
 
+@router.get("/providers/{provider_id}")
+async def get_provider_detail(
+    provider_id: int,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    profile_result = await db.execute(select(ProviderProfile).where(ProviderProfile.id == provider_id))
+    profile = profile_result.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found")
+
+    user_result = await db.execute(select(User).where(User.id == profile.user_id))
+    provider_user = user_result.scalar_one_or_none()
+
+    availability_result = await db.execute(
+        select(ProviderAvailability).where(ProviderAvailability.provider_user_id == profile.id)
+    )
+    availability = availability_result.scalar_one_or_none()
+
+    assets_result = await db.execute(
+        select(ProviderAsset)
+        .where(ProviderAsset.provider_user_id == profile.id)
+        .order_by(ProviderAsset.created_at.desc())
+    )
+    assets = assets_result.scalars().all()
+
+    documents_result = await db.execute(
+        select(ProviderDocument)
+        .where(ProviderDocument.provider_user_id == profile.id)
+        .order_by(ProviderDocument.created_at.desc())
+    )
+    documents = documents_result.scalars().all()
+
+    capabilities_result = await db.execute(
+        select(ProviderServiceCapability, ServiceType)
+        .join(ServiceType, ServiceType.id == ProviderServiceCapability.service_type_id)
+        .where(ProviderServiceCapability.provider_user_id == profile.id)
+        .order_by(ServiceType.name)
+    )
+
+    compliance_result = await db.execute(
+        select(ComplianceCheck)
+        .where(ComplianceCheck.provider_user_id == profile.user_id)
+        .order_by(ComplianceCheck.created_at.desc())
+    )
+
+    performance = await build_provider_performance(profile, db)
+
+    return {
+        "id": profile.id,
+        "user_id": profile.user_id,
+        "business_name": profile.business_name,
+        "provider_type": profile.provider_type.value if hasattr(profile.provider_type, "value") else str(profile.provider_type),
+        "profile_status": profile.profile_status.value if hasattr(profile.profile_status, "value") else str(profile.profile_status),
+        "tier": profile.tier.value if hasattr(profile.tier, "value") else str(profile.tier),
+        "average_rating": profile.average_rating,
+        "total_jobs_completed": profile.total_jobs_completed,
+        "max_active_jobs": getattr(profile, "max_active_jobs", 5),
+        "service_radius_km": getattr(profile, "service_radius_km", 50.0),
+        "phone_secondary": profile.phone_secondary,
+        "national_id": profile.national_id,
+        "license_number": profile.license_number,
+        "payout_method": profile.payout_method,
+        "payout_account_reference": profile.payout_account_reference,
+        "availability_status": availability.status.value if availability and hasattr(availability.status, "value") else "offline",
+        "created_at": profile.created_at.isoformat() if profile.created_at else None,
+        "user": {
+            "id": provider_user.id if provider_user else profile.user_id,
+            "first_name": provider_user.first_name if provider_user else None,
+            "last_name": provider_user.last_name if provider_user else None,
+            "phone": provider_user.phone if provider_user else None,
+            "email": provider_user.email if provider_user else None,
+            "status": provider_user.status.value if provider_user and hasattr(provider_user.status, "value") else None,
+        },
+        "assets": [
+            {
+                "id": asset.id,
+                "provider_user_id": asset.provider_user_id,
+                "asset_type": asset.asset_type,
+                "registration_number": asset.registration_number,
+                "make": asset.make,
+                "model": asset.model,
+                "capacity_notes": asset.capacity_notes,
+                "is_active": asset.is_active,
+                "created_at": asset.created_at.isoformat() if asset.created_at else None,
+            }
+            for asset in assets
+        ],
+        "documents": [
+            {
+                "id": document.id,
+                "provider_user_id": document.provider_user_id,
+                "document_type": document.document_type,
+                "file_url": document.file_url,
+                "verification_status": document.verification_status,
+                "verified_by_user_id": document.verified_by_user_id,
+                "verified_at": document.verified_at.isoformat() if document.verified_at else None,
+                "created_at": document.created_at.isoformat() if document.created_at else None,
+            }
+            for document in documents
+        ],
+        "capabilities": [
+            {
+                "id": capability.id,
+                "service_type_id": service_type.id,
+                "name": service_type.name,
+                "code": service_type.code,
+                "description": service_type.description,
+                "requires_tow_vehicle": service_type.requires_tow_vehicle,
+                "is_active": capability.is_active,
+            }
+            for capability, service_type in capabilities_result.all()
+        ],
+        "compliance_checks": [
+            {
+                "id": check.id,
+                "check_type": check.check_type,
+                "status": check.status,
+                "notes": check.notes,
+                "checked_at": check.checked_at.isoformat() if check.checked_at else None,
+                "created_at": check.created_at.isoformat() if check.created_at else None,
+            }
+            for check in compliance_result.scalars().all()
+        ],
+        **performance,
+    }
+
+
 @router.post("/providers/{provider_id}/approve")
 async def approve_provider(
     provider_id: int,
@@ -302,6 +512,46 @@ async def approve_provider(
     ))
     await db.commit()
     return {"message": "Provider approved"}
+
+
+@router.post("/providers/{provider_id}/documents/{document_id}/verify")
+async def verify_provider_document(
+    provider_id: int,
+    document_id: int,
+    payload: DocumentVerificationRequest,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    profile_result = await db.execute(select(ProviderProfile).where(ProviderProfile.id == provider_id))
+    profile = profile_result.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found")
+
+    document_result = await db.execute(
+        select(ProviderDocument).where(
+            ProviderDocument.id == document_id,
+            ProviderDocument.provider_user_id == profile.id,
+        )
+    )
+    document = document_result.scalar_one_or_none()
+    if not document:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    if payload.status not in {"pending", "verified", "rejected"}:
+        raise HTTPException(status_code=422, detail="status must be pending, verified or rejected")
+
+    document.verification_status = payload.status
+    document.verified_by_user_id = admin.id if payload.status in {"verified", "rejected"} else None
+    document.verified_at = datetime.now(timezone.utc) if payload.status in {"verified", "rejected"} else None
+    db.add(AdminAction(
+        admin_user_id=admin.id,
+        action_type="verify_provider_document",
+        entity_type="provider_document",
+        entity_id=document.id,
+        metadata_json={"status": payload.status},
+    ))
+    await db.commit()
+    return {"message": "Document status updated", "status": payload.status}
 
 
 @router.post("/providers/{provider_id}/suspend")
@@ -485,44 +735,7 @@ async def get_provider_performance(
     profile = profile_result.scalar_one_or_none()
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Provider not found")
-
-    # Assignment stats
-    assign_result = await db.execute(
-        select(
-            func.count(DispatchAssignment.id),
-            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.ACCEPTED),
-            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.DECLINED),
-            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.COMPLETED),
-            func.count(DispatchAssignment.id).filter(DispatchAssignment.dispatch_status == DispatchStatus.TIMED_OUT),
-        ).where(DispatchAssignment.provider_user_id == profile.user_id)
-    )
-    a = assign_result.one()
-    total_assigned, total_accepted, total_declined, total_completed, total_timed_out = (
-        a[0] or 0, a[1] or 0, a[2] or 0, a[3] or 0, a[4] or 0,
-    )
-
-    # Earnings
-    earn_result = await db.execute(
-        select(
-            func.coalesce(func.sum(ProviderPayout.gross_amount), 0),
-            func.coalesce(func.sum(ProviderPayout.commission_amount), 0),
-            func.coalesce(func.sum(ProviderPayout.net_amount), 0),
-            func.count(ProviderPayout.id),
-        ).where(ProviderPayout.provider_user_id == profile.user_id)
-    )
-    e = earn_result.one()
-
-    # Avg ETA vs actual response time
-    eta_result = await db.execute(
-        select(func.avg(DispatchAssignment.arrival_eta_minutes)).where(
-            DispatchAssignment.provider_user_id == profile.user_id,
-            DispatchAssignment.arrival_eta_minutes.isnot(None),
-        )
-    )
-    avg_eta = eta_result.scalar()
-
-    completion_rate = round((total_completed / total_assigned * 100) if total_assigned > 0 else 0, 1)
-    acceptance_rate = round((total_accepted / total_assigned * 100) if total_assigned > 0 else 0, 1)
+    performance = await build_provider_performance(profile, db)
 
     # Availability status
     avail_result = await db.execute(
@@ -539,23 +752,7 @@ async def get_provider_performance(
         "average_rating": profile.average_rating,
         "total_jobs_completed": profile.total_jobs_completed,
         "availability_status": avail.status.value if avail and hasattr(avail.status, "value") else "offline",
-        "assignments": {
-            "total_assigned": total_assigned,
-            "total_accepted": total_accepted,
-            "total_declined": total_declined,
-            "total_completed": total_completed,
-            "total_timed_out": total_timed_out,
-            "completion_rate_pct": completion_rate,
-            "acceptance_rate_pct": acceptance_rate,
-        },
-        "earnings": {
-            "total_gross": float(e[0]),
-            "total_commission": float(e[1]),
-            "total_net": float(e[2]),
-            "total_payout_records": e[3],
-            "currency": "USD",
-        },
-        "avg_eta_minutes": round(float(avg_eta), 1) if avg_eta else None,
+        **performance,
         "max_active_jobs": getattr(profile, "max_active_jobs", 5),
         "service_radius_km": getattr(profile, "service_radius_km", 50.0),
     }
@@ -649,6 +846,40 @@ async def get_compliance_checks(
         }
         for c in result.scalars().all()
     ]
+
+
+@router.post("/compliance/{provider_user_id}")
+async def create_compliance_check(
+    provider_user_id: int,
+    payload: ComplianceCheckCreateRequest,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    compliance_check = ComplianceCheck(
+        provider_user_id=provider_user_id,
+        check_type=payload.check_type,
+        status=payload.status,
+        notes=payload.notes,
+        checked_by_user_id=admin.id,
+        checked_at=datetime.now(timezone.utc) if payload.status != "pending" else None,
+    )
+    db.add(compliance_check)
+    db.add(AdminAction(
+        admin_user_id=admin.id,
+        action_type="create_compliance_check",
+        entity_type="compliance_check",
+        entity_id=provider_user_id,
+        metadata_json={"check_type": payload.check_type, "status": payload.status},
+    ))
+    await db.commit()
+    await db.refresh(compliance_check)
+    return {
+        "id": compliance_check.id,
+        "check_type": compliance_check.check_type,
+        "status": compliance_check.status,
+        "notes": compliance_check.notes,
+        "checked_at": compliance_check.checked_at.isoformat() if compliance_check.checked_at else None,
+    }
 
 
 @router.get("/analytics/daily")

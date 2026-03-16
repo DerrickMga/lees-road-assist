@@ -123,10 +123,48 @@ export interface ProviderProfile {
   business_name: string | null;
   provider_type: string;
   profile_status: string;
-  service_description: string | null;
+  phone_secondary: string | null;
+  national_id: string | null;
+  license_number: string | null;
+  tier: string;
   average_rating: number;
   total_jobs_completed: number;
+  max_active_jobs: number;
+  service_radius_km: number;
+  payout_method: string | null;
+  payout_account_reference: string | null;
+  availability_status: string;
   created_at: string;
+}
+
+export interface ProviderAsset {
+  id: number;
+  provider_user_id: number;
+  asset_type: string;
+  registration_number: string | null;
+  make: string | null;
+  model: string | null;
+  capacity_notes: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ProviderDocument {
+  id: number;
+  provider_user_id: number;
+  document_type: string;
+  file_url: string;
+  verification_status: string;
+  created_at: string;
+}
+
+export interface ProviderCapability {
+  id: number;
+  service_type_id: number;
+  name: string;
+  code: string;
+  description: string | null;
+  requires_tow_vehicle: boolean;
 }
 
 export interface CustomerProfile {
@@ -172,8 +210,66 @@ export interface AdminProvider {
   business_name: string | null;
   provider_type: string;
   profile_status: string;
+  tier: string;
   average_rating: number;
   total_jobs_completed: number;
+  max_active_jobs: number;
+  service_radius_km: number;
+  availability_status: string;
+  total_net_earnings: number;
+  total_payouts: number;
+  created_at: string;
+}
+
+export interface AdminComplianceCheck {
+  id: number;
+  check_type: string;
+  status: string;
+  notes: string | null;
+  checked_at: string | null;
+  created_at?: string | null;
+}
+
+export interface AdminProviderDetail extends AdminProvider {
+  phone_secondary: string | null;
+  national_id: string | null;
+  license_number: string | null;
+  payout_method: string | null;
+  payout_account_reference: string | null;
+  user: {
+    id: number;
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+    email: string | null;
+    status: string | null;
+  };
+  assets: ProviderAsset[];
+  documents: Array<ProviderDocument & { verified_by_user_id?: number | null; verified_at?: string | null }>;
+  capabilities: Array<ProviderCapability & { is_active?: boolean }>;
+  compliance_checks: AdminComplianceCheck[];
+  assignments: {
+    total_assigned: number;
+    total_accepted: number;
+    total_declined: number;
+    total_completed: number;
+    total_timed_out: number;
+    completion_rate_pct: number;
+    acceptance_rate_pct: number;
+  };
+  earnings: {
+    total_gross: number;
+    total_commission: number;
+    total_net: number;
+    total_payout_records: number;
+    currency: string;
+  };
+  avg_eta_minutes: number | null;
+}
+
+export interface AdminSetting {
+  key: string;
+  value: Record<string, unknown>;
 }
 
 export interface AdminSummary {

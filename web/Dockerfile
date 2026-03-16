@@ -1,14 +1,14 @@
 # ─── Web (Next.js) ───────────────────────────────────────────────────────────
 FROM node:20-alpine AS web-deps
 WORKDIR /app
-COPY web/package*.json ./
+COPY package*.json ./
 RUN npm ci --omit=dev
 
 FROM node:20-alpine AS web-builder
 WORKDIR /app
-COPY web/package*.json ./
+COPY package*.json ./
 RUN npm ci
-COPY web/ .
+COPY . .
 # Inject production env at build time
 ARG NEXT_PUBLIC_API_URL=https://leesrca.kmgvitallinks.com/api/v1
 ARG NEXT_PUBLIC_WS_URL=wss://leesrca.kmgvitallinks.com/api/v1/ws
