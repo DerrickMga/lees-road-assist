@@ -10,11 +10,10 @@ const VEHICLE_CLASSES = ['sedan', 'suv', 'hatchback', 'pickup', 'van', 'truck', 
 const FUEL_TYPES = ['petrol', 'diesel', 'electric', 'hybrid'];
 
 export default function CustomerProfilePage() {
-  const { user, signIn, token, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   // Customer profile
-  const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
@@ -45,7 +44,6 @@ export default function CustomerProfilePage() {
     setProfileLoading(true);
     try {
       const p = await api.get<CustomerProfile>('/profile/');
-      setProfile(p);
       setEmergencyName(p.emergency_contact_name ?? '');
       setEmergencyPhone(p.emergency_contact_phone ?? '');
       setPreferredPayment(p.preferred_payment_method ?? '');

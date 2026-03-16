@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
 import { NotificationProvider } from "@/lib/notifications";
 import Image from "next/image";
 import Link from "next/link";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
 });
 
@@ -30,13 +30,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head />
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${manrope.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
         <AuthProvider>
           <NotificationProvider>
             {/* Top navigation bar */}
             <header
-              style={{ background: "var(--brand-navy)" }}
-              className="sticky top-0 z-50 shadow-md"
+              style={{
+                background:
+                  "linear-gradient(120deg, var(--brand-navy) 0%, #183563 62%, #214b88 100%)",
+              }}
+              className="sticky top-0 z-50 border-b border-white/10 shadow-lg shadow-slate-900/15"
             >
               <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-3">
@@ -49,10 +52,10 @@ export default function RootLayout({
                     className="object-contain"
                   />
                 </Link>
-                <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/80">
-                  <Link href="/customer/dashboard" className="hover:text-white transition">Dashboard</Link>
-                  <Link href="/customer/requests"   className="hover:text-white transition">My Requests</Link>
-                  <Link href="/customer/profile"    className="hover:text-white transition">Profile</Link>
+                <nav className="hidden md:flex items-center gap-2 text-sm font-semibold text-white/90">
+                  <Link href="/customer/dashboard" className="rounded-lg px-3 py-1.5 hover:bg-white/10 transition">Dashboard</Link>
+                  <Link href="/customer/requests" className="rounded-lg px-3 py-1.5 hover:bg-white/10 transition">My Requests</Link>
+                  <Link href="/customer/profile" className="rounded-lg px-3 py-1.5 hover:bg-white/10 transition">Profile</Link>
                 </nav>
               </div>
             </header>

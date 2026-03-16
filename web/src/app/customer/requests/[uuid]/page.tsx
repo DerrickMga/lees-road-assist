@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Clock, Search, CheckCircle, Truck, MapPin, Wrench, PartyPopper,
-  DollarSign, Smartphone, Banknote, Star, ArrowLeft, XCircle,
+  DollarSign, Smartphone, Banknote, Star, ArrowLeft,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { ServiceRequest, Transaction } from '@/types';
@@ -63,7 +63,7 @@ export default function RequestDetailPage() {
   const [ratingDone, setRatingDone] = useState(false);
   const [ratingError, setRatingError] = useState('');
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const r = await api.get<ServiceRequest>(`/requests/${uuid}`);
@@ -81,9 +81,11 @@ export default function RequestDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [uuid]);
 
-  useEffect(() => { load(); }, [uuid]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function handleCancel() {
     setCancelling(true);

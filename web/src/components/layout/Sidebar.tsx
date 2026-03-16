@@ -75,25 +75,25 @@ export default function Sidebar({ variant = 'admin' }: SidebarProps) {
     'Admin Dashboard';
 
   return (
-    <aside className="w-64 bg-gray-950 text-white h-full flex flex-col flex-shrink-0 border-r border-gray-800 overflow-y-auto">
+    <aside className="w-64 text-white h-full flex flex-col flex-shrink-0 border-r border-slate-800/70 overflow-y-auto bg-[linear-gradient(180deg,#0d1d37_0%,#10284a_55%,#153563_100%)]">
       {/* Brand */}
-      <div className="px-5 py-5 border-b border-gray-800">
+      <div className="px-5 py-5 border-b border-white/10">
         <div className="flex items-center gap-2 mb-0.5">
-          <div className="w-8 h-8 rounded-lg bg-yellow-400 flex items-center justify-center font-black text-black text-sm">L</div>
+          <div className="w-8 h-8 rounded-lg bg-[linear-gradient(145deg,#ffd365_0%,#f1b91f_100%)] shadow-sm shadow-amber-500/30 flex items-center justify-center font-black text-slate-950 text-sm">L</div>
           <span className="text-base font-black text-white tracking-tight">Lee&apos;s Road Assist</span>
         </div>
-        <p className="text-xs text-gray-500 pl-10">{roleLabel}</p>
+        <p className="text-xs text-slate-300/80 pl-10">{roleLabel}</p>
       </div>
 
       {/* User info */}
       {user && (
-        <div className="px-4 py-3 border-b border-gray-800 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-sm font-bold text-black flex-shrink-0">
+        <div className="px-4 py-3 border-b border-white/10 flex items-center gap-3 bg-white/5">
+          <div className="w-8 h-8 rounded-full bg-[linear-gradient(145deg,#ffd365_0%,#f1b91f_100%)] flex items-center justify-center text-sm font-bold text-slate-950 flex-shrink-0">
             {user.first_name[0]}{user.last_name[0]}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium truncate leading-tight">{getUserFullName(user)}</p>
-            <p className="text-xs text-gray-500 capitalize">{user.role.replace('_', ' ')}</p>
+            <p className="text-xs text-slate-300/80 capitalize">{user.role.replace('_', ' ')}</p>
           </div>
         </div>
       )}
@@ -108,8 +108,8 @@ export default function Sidebar({ variant = 'admin' }: SidebarProps) {
               href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 active
-                  ? 'bg-yellow-400 text-black font-semibold'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-[linear-gradient(120deg,#ffd365_0%,#f1b91f_100%)] text-slate-950 font-semibold shadow-sm shadow-amber-500/35'
+                  : 'text-slate-200/85 hover:bg-white/10 hover:text-white'
               }`}
             >
               <Icon size={16} strokeWidth={active ? 2.5 : 2} />
@@ -120,9 +120,9 @@ export default function Sidebar({ variant = 'admin' }: SidebarProps) {
       </nav>
 
       {/* Sign out */}
-      <div className="p-3 border-t border-gray-800">
+      <div className="p-3 border-t border-white/10">
         {confirmLogout ? (
-          <div className="rounded-lg bg-gray-800 p-3 text-xs text-gray-300">
+          <div className="rounded-lg bg-black/20 p-3 text-xs text-slate-100/90 border border-white/10">
             <p className="mb-2 font-medium text-white">Sign out?</p>
             <div className="flex gap-2">
               <button
@@ -133,7 +133,7 @@ export default function Sidebar({ variant = 'admin' }: SidebarProps) {
               </button>
               <button
                 onClick={() => setConfirmLogout(false)}
-                className="flex-1 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-md transition-colors"
+                className="flex-1 py-1.5 bg-white/10 hover:bg-white/20 text-slate-200 rounded-md transition-colors"
               >
                 Cancel
               </button>
@@ -142,7 +142,7 @@ export default function Sidebar({ variant = 'admin' }: SidebarProps) {
         ) : (
           <button
             onClick={() => setConfirmLogout(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-red-900/40 hover:text-red-400 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-200/85 hover:bg-red-500/15 hover:text-red-300 transition-colors"
           >
             <LogOut size={16} strokeWidth={2} />
             <span>Sign Out</span>

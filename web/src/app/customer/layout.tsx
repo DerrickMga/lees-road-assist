@@ -17,14 +17,14 @@ export default function CustomerLayout({ children }: { children: ReactNode }) {
 
   if (isLoading || !user || user.role !== 'customer') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-100/70 backdrop-blur-sm">
+        <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-transparent">
       <Sidebar variant="customer" />
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">{children}</div>

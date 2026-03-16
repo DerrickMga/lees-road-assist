@@ -26,8 +26,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoading || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-100/70 backdrop-blur-sm">
+        <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -35,8 +35,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex h-screen">
       <Sidebar variant="admin" />
-      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+      <div className="flex-1 flex flex-col overflow-hidden bg-transparent">
+        <header className="h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0">
           <span className="text-sm text-gray-500">
             {user && <span className="font-medium text-gray-800">{getUserFullName(user)}</span>}
             {user && <span className="ml-2 capitalize text-gray-400 text-xs">{user.role.replace('_', ' ')}</span>}

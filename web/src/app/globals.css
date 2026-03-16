@@ -1,14 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #1b1f5c;
+  --background: #f7f8fc;
+  --foreground: #10213d;
 
-  /* Lee's Express Courier brand colours */
-  --brand-navy:   #1b1f5c;
-  --brand-red:    #cc1212;
-  --brand-white:  #ffffff;
-  --brand-light:  #f4f5fb;
+  /* Lee's Road Assist brand colours */
+  --brand-navy: #10213d;
+  --brand-red: #dd3c2f;
+  --brand-white: #ffffff;
+  --brand-light: #eaf0fb;
+  --brand-gold: #f1b91f;
+
+  --surface-1: #ffffff;
+  --surface-2: #f2f5fb;
+  --surface-border: #d7dfef;
+  --muted: #5a6c8a;
 }
 
 @theme inline {
@@ -22,19 +28,40 @@
   --color-brand-red:   var(--brand-red);
   --color-brand-white: var(--brand-white);
   --color-brand-light: var(--brand-light);
+  --color-brand-gold: var(--brand-gold);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0e1032;
-    --foreground: #f0f1ff;
+    --background: #f7f8fc;
+    --foreground: #10213d;
   }
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 10% -10%, #d7e5ff 0%, rgba(215, 229, 255, 0) 42%),
+    radial-gradient(circle at 92% 2%, #ffe2cf 0%, rgba(255, 226, 207, 0) 36%),
+    linear-gradient(180deg, #f9fbff 0%, #f1f4fa 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-manrope), "Segoe UI", sans-serif;
+}
+
+main {
+  position: relative;
+}
+
+.surface-card {
+  background: var(--surface-1);
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  box-shadow: 0 14px 34px rgba(16, 33, 61, 0.08);
+}
+
+.surface-panel {
+  background: linear-gradient(135deg, #ffffff 0%, var(--surface-2) 100%);
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
 }
 
 /* ── Brand utility classes ───────────────────────────────────────────── */
